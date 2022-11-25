@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521/xe
+    username: C##developer
+    password: developer
+    driver-class-name: oracle.jdbc.OracleDriver
+  jpa:
+    properties:
+      hibernate:
+        generate_statistics: true
+        jdbc:
+          batch_size: 50
+          order_inserts: true
+
+filePath: e:\for-developers\onlinefraud.csv
+
+logging:
+  level:
+    com.zaxxer.hikari: DEBUG
