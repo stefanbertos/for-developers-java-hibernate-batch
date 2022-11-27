@@ -14,7 +14,7 @@ import javax.persistence.*;
 public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "payment_seq")
-    @SequenceGenerator(name="payment_gen", sequenceName="payment_seq")
+    @SequenceGenerator(name = "payment_gen", sequenceName = "payment_seq")
     private long id;
 
     private int step;

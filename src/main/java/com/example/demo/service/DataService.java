@@ -25,40 +25,40 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class DataService {
-    private DataSource dataSource;
+    private final DataSource dataSource;
 
-    private PaymentRepository paymentRepository;
+    private final PaymentRepository paymentRepository;
 
-    private ModelMapper modelMapper;
+    private final ModelMapper modelMapper;
 
     @Autowired
     public DataService(DataSource dataSource, PaymentRepository paymentRepository) {
         this.dataSource = dataSource;
         this.paymentRepository = paymentRepository;
-        modelMapper =  new ModelMapper();
+        modelMapper = new ModelMapper();
     }
 
     public void processData(String filePath) throws IOException, CsvValidationException, SQLException {
         int rowIndex = 0;
         List<PaymentVO> list = new ArrayList<>();
         try (Reader reader = Files.newBufferedReader(Paths.get(filePath))) {
-            try (CSVReader csvReader = new CSVReader(reader); ) {
+            try (CSVReader csvReader = new CSVReader(reader)) {
                 csvReader.skip(1);
-                String[] record;
-                while ((record = csvReader.readNext()) != null) {
+                String[] line;
+                while ((line = csvReader.readNext()) != null) {
                     rowIndex++;
                     PaymentVO payment = new PaymentVO();
-                    payment.setStep(Integer.parseInt(record[0]));
-                    payment.setType(record[1]);
-                    payment.setAmount(Double.valueOf(record[2]));
-                    payment.setNameOrig(record[3]);
-                    payment.setOldBalanceOrg(Double.valueOf(record[4]));
-                    payment.setNewBalanceOrig(Double.valueOf(record[5]));
-                    payment.setNameDest(record[6]);
-                    payment.setOldBalanceDest(Double.valueOf(record[7]));
-                    payment.setNewBalanceDest(Double.valueOf(record[8]));
-                    payment.setIsFraud(Integer.parseInt(record[9]));
-                    payment.setIsFlaggedFraud(Integer.parseInt(record[10]));
+                    payment.setStep(Integer.parseInt(line[0]));
+                    payment.setType(line[1]);
+                    payment.setAmount(Double.valueOf(line[2]));
+                    payment.setNameOrig(line[3]);
+                    payment.setOldBalanceOrg(Double.valueOf(line[4]));
+                    payment.setNewBalanceOrig(Double.valueOf(line[5]));
+                    payment.setNameDest(line[6]);
+                    payment.setOldBalanceDest(Double.valueOf(line[7]));
+                    payment.setNewBalanceDest(Double.valueOf(line[8]));
+                    payment.setIsFraud(Integer.parseInt(line[9]));
+                    payment.setIsFlaggedFraud(Integer.parseInt(line[10]));
                     list.add(payment);
 
                     if (rowIndex % 10000 == 0) {
@@ -68,20 +68,18 @@ public class DataService {
                         list.clear();
                     }
                 }
-                if (list.size() != 0) {
+                if (!list.isEmpty()) {
                     batchInsert(list);
                     hibernateInsert(list);
                 }
-
             }
         }
     }
 
     private void batchInsert(List<PaymentVO> list) throws SQLException {
         long start = System.currentTimeMillis();
-        String insertEmployeeSQL = "INSERT INTO /*+append*/ payment( id, step, type, amount, nameorig, oldbalanceorg, newbalanceorig, namedest, oldbalancedest, newbalancedest, isfraud, isflaggedfraud) "
-                + "VALUES (payment_seq.nextval, ?,?,?,?,?,?,?,?,?,?,?)";
-        try (Connection connection = dataSource.getConnection();PreparedStatement employeeStmt = connection.prepareStatement(insertEmployeeSQL);) {
+        String insertEmployeeSQL = "INSERT INTO /*+append*/ payment( id, step, type, amount, nameorig, oldbalanceorg, newbalanceorig, namedest, oldbalancedest, newbalancedest, isfraud, isflaggedfraud) " + "VALUES (payment_seq.nextval, ?,?,?,?,?,?,?,?,?,?,?)";
+        try (Connection connection = dataSource.getConnection(); PreparedStatement employeeStmt = connection.prepareStatement(insertEmployeeSQL)) {
             for (int i = 0; i < list.size(); i++) {
                 employeeStmt.setInt(1, list.get(i).getStep());
                 employeeStmt.setString(2, list.get(i).getType());
@@ -99,14 +97,13 @@ public class DataService {
             employeeStmt.executeBatch();
         }
         long finish = System.currentTimeMillis();
-        log.info("batchInsert method time = {} ms",finish - start);
+        log.info("batchInsert method time = {} ms", finish - start);
     }
 
     private void hibernateInsert(List<PaymentVO> list) {
         long start = System.currentTimeMillis();
         paymentRepository.saveAll(list.stream().map(item -> modelMapper.map(item, Payment.class)).collect(Collectors.toList()));
-
         long finish = System.currentTimeMillis();
-        log.info("hibernateInsert method time = {} ms",finish - start);
+        log.info("hibernateInsert method time = {} ms", finish - start);
     }
 }

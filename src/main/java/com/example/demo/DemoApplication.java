@@ -1,7 +1,6 @@
 package com.example.demo;
 
 import com.example.demo.service.DataService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
